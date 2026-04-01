@@ -26,7 +26,7 @@ Control a cute little ball and jump onto red platforms. The longer you hold, the
 
 ## 🚀 Play Online
 
-Visit: [Your GitHub Pages URL]
+Visit: 
 
 ## 🎮 Controls
 
