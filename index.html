@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>跳一跳 | 蓄力跳跃挑战</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Jump Jump Game - Charge and jump! Press and hold to charge power, release to jump. Test your precision and aim for the highest score!">
+    <title>Jump Jump | Charge Jump Challenge</title>
     <style>
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         body {
@@ -20,6 +24,7 @@
             margin: 0;
             padding: 20px;
             overflow: hidden;
+            touch-action: pan-y pinch-zoom;
         }
         
         #gameContainer {
@@ -29,6 +34,9 @@
             padding: 20px;
             box-shadow: 0 25px 45px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.2);
+            width: 100%;
+            max-width: 540px;
+            margin: 0 auto;
         }
         
         canvas {
@@ -37,6 +45,9 @@
             display: block;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             transition: transform 0.2s ease;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 500 / 400;
         }
         
         canvas:active {
@@ -127,6 +138,8 @@
             transition: all 0.2s ease;
             box-shadow: 0 5px 12px rgba(0,0,0,0.2);
             letter-spacing: 1px;
+            touch-action: manipulation;
+            min-height: 44px;
         }
         
         button:hover {
@@ -145,15 +158,21 @@
             font-size: 12px;
             color: rgba(255,255,255,0.7);
             background: rgba(0,0,0,0.3);
-            padding: 8px 16px;
+            padding: 10px 16px;
             border-radius: 40px;
             backdrop-filter: blur(4px);
         }
         
-        /* 粒子特效和提示动画 */
-        @keyframes popScore {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+        /* Animations */
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -70%) scale(1.5);
+            }
         }
         
         .floating-score {
@@ -197,11 +216,78 @@
             animation: bounce 0.4s ease;
         }
         
-        @media (max-width: 600px) {
-            .info-panel { padding: 8px 16px; }
-            .score-value { font-size: 22px; }
-            button { padding: 6px 18px; font-size: 13px; }
-            .controls { font-size: 10px; }
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #gameContainer {
+                padding: 15px;
+            }
+            
+            .info-panel {
+                padding: 10px 15px;
+                gap: 10px;
+            }
+            
+            .score-box {
+                min-width: 70px;
+                padding: 4px 12px;
+            }
+            
+            .score-value {
+                font-size: 20px;
+            }
+            
+            .score-label {
+                font-size: 10px;
+            }
+            
+            button {
+                padding: 8px 18px;
+                font-size: 13px;
+                min-height: 40px;
+            }
+            
+            .controls {
+                font-size: 10px;
+                padding: 8px 12px;
+            }
+            
+            .charging-text {
+                font-size: 9px;
+            }
+            
+            .bar-bg {
+                height: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .score-value {
+                font-size: 18px;
+            }
+            
+            .score-box {
+                min-width: 60px;
+            }
+            
+            button {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (orientation: landscape) and (max-height: 500px) {
+            body {
+                padding: 10px;
+            }
+            
+            #gameContainer {
+                padding: 10px;
+            }
+            
+            .info-panel {
+                margin-top: 10px;
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>
@@ -211,110 +297,125 @@
         
         <div class="info-panel">
             <div class="score-box">
-                <div class="score-label">🎯 得分</div>
+                <div class="score-label">🎯 SCORE</div>
                 <div class="score-value" id="score">0</div>
             </div>
             
             <div class="charging-bar">
-                <div class="charging-text" id="chargingText">💡 按住 蓄力跳跃</div>
+                <div class="charging-text" id="chargingText">💡 HOLD to CHARGE</div>
                 <div class="bar-bg">
                     <div class="bar-fill" id="chargingBar"></div>
                 </div>
             </div>
             
             <div class="score-box">
-                <div class="score-label">🏆 最高分</div>
+                <div class="score-label">🏆 BEST</div>
                 <div class="score-value highscore-value" id="highScore">0</div>
             </div>
             
-            <button id="resetBtn">🔄 重来</button>
+            <button id="resetBtn">🔄 RESTART</button>
         </div>
         
         <div class="controls">
-            🖱️ 鼠标长按 / 按住空格蓄力 → 释放跳跃 | 力度决定距离，精准落点加分！
+            💻 PC: Hold SPACE / Mouse to charge → Release to jump<br>
+            📱 Mobile: Long press on screen to charge → Release to jump
         </div>
     </div>
 
     <script>
         (function(){
-            // ----- 画布元素 -----
+            // Canvas elements
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             
-            // ----- 固定尺寸 -----
+            // Fixed logical dimensions
             const WIDTH = 500;
             const HEIGHT = 400;
             
-            // ----- 游戏核心参数（优化版）-----
+            // Handle canvas scaling
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                const maxWidth = container.clientWidth;
+                if (maxWidth < 500) {
+                    canvas.style.width = '100%';
+                    canvas.style.height = 'auto';
+                } else {
+                    canvas.style.width = '500px';
+                    canvas.style.height = '400px';
+                }
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // Game variables
             let player = { x: 250, y: 350, radius: 13 };
             let target = { x: 320, y: 300, size: 28 };
             let score = 0;
             let highScore = parseInt(localStorage.getItem('jumpHighScore_V2')) || 0;
             let gameRunning = true;
             
-            // 蓄力系统
+            // Charging system
             let isCharging = false;
-            let currentPower = 0;      // 0-100
+            let currentPower = 0;
             let pressStartTime = 0;
             
-            // 特效与连击
-            let combo = 0;              // 连击计数
+            // Combo system
+            let combo = 0;
             let lastJumpSuccess = true;
             
-            // 辅助变量 (防止重复跳跃/快速释放)
+            // Helper variables
             let jumpExecuting = false;
             
-            // 显示最高分
+            // Display high score
             document.getElementById('highScore').innerHTML = highScore;
             document.getElementById('score').innerHTML = "0";
             
-            // ----- 增强: 智能生成平台，避免太远/太近且不超出边界 -----
+            // Vibration feedback (mobile only)
+            function vibrate(duration = 50) {
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(duration);
+                }
+            }
+            
+            // Generate random target platform
             function generateTarget() {
-                const minDistance = 65;      // 最小跳跃距离
-                const maxDistance = 200;     // 最大理论跳跃距离（游戏蓄力满100跳200）
+                const minDistance = 65;
+                const maxDistance = 200;
                 let attempts = 0;
                 let newX, newY;
                 let valid = false;
                 
                 while (!valid && attempts < 60) {
-                    // 留出边距，避免平台太靠边缘
                     newX = Math.random() * (WIDTH - 70) + 35;
                     newY = Math.random() * (HEIGHT - 85) + 45;
                     const dx = newX - player.x;
                     const dy = newY - player.y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
-                    // 确保距离在合理区间内 (过远必死没意义，过近太简单)
-                    if (dist >= minDistance && dist <= maxDistance + 40) {
-                        // 额外避免与玩家重叠
-                        if (dist > 25) {
-                            valid = true;
-                        }
+                    if (dist >= minDistance && dist <= maxDistance + 40 && dist > 25) {
+                        valid = true;
                     }
                     attempts++;
                 }
-                // 保底生成：确保不超出边界
                 target.x = Math.min(Math.max(newX, 28), WIDTH - 28);
                 target.y = Math.min(Math.max(newY, 28), HEIGHT - 28);
-                
-                // 动态调整目标平台视觉效果大小
                 target.size = 28;
             }
             
-            // 欧式距离
+            // Calculate distance to target
             function getDistance() {
                 const dx = target.x - player.x;
                 const dy = target.y - player.y;
                 return Math.sqrt(dx*dx + dy*dy);
             }
             
-            // 飘浮加分特效 (炫酷)
+            // Floating score animation
             function showFloatingScore(addScore, isPerfect = false) {
                 const div = document.createElement('div');
                 div.className = 'floating-score';
                 div.textContent = `+${addScore}`;
                 if (isPerfect) div.textContent = `✨ PERFECT +${addScore} ✨`;
-                div.style.left = `${canvas.getBoundingClientRect().left + target.x}px`;
-                div.style.top = `${canvas.getBoundingClientRect().top + target.y - 20}px`;
+                div.style.left = `${canvas.getBoundingClientRect().left + target.x * (canvas.clientWidth / WIDTH)}px`;
+                div.style.top = `${canvas.getBoundingClientRect().top + target.y * (canvas.clientHeight / HEIGHT) - 20}px`;
                 div.style.color = isPerfect ? '#ffd966' : '#ffffff';
                 div.style.fontSize = isPerfect ? '26px' : '22px';
                 div.style.fontWeight = 'bold';
@@ -323,7 +424,7 @@
                 setTimeout(() => div.remove(), 800);
             }
             
-            // 屏幕中央消息特效
+            // Center screen message
             function showCenterMessage(text, color, isGameOver = false) {
                 const msgDiv = document.createElement('div');
                 msgDiv.textContent = text;
@@ -348,45 +449,39 @@
                 setTimeout(() => msgDiv.remove(), 800);
             }
             
-            // 执行跳跃 (核心优化)
+            // Perform jump
             function performJump() {
                 if (!gameRunning || !isCharging || jumpExecuting) return;
                 jumpExecuting = true;
                 
                 const distance = getDistance();
-                // 蓄力值映射为跳跃距离 (最大200)
                 const jumpDistance = Math.min(currentPower * 2, 210);
                 const error = Math.abs(jumpDistance - distance);
-                
-                // 优化判定: 完美范围 12，良好范围 25
                 const isPerfect = error < 12;
                 const isHit = error < 28;
                 
                 if (isHit) {
-                    // ----- 跳跃成功逻辑 -----
-                    let addScore = 100 + Math.floor(currentPower / 2.5);  // 100~140之间动态
+                    // Jump success - vibration
+                    vibrate(30);
+                    
+                    let addScore = 100 + Math.floor(currentPower / 2.5);
                     if (isPerfect) {
                         addScore = Math.floor(addScore * 1.5);
-                        // 连击加成
                         combo = (lastJumpSuccess) ? combo + 1 : 1;
                         addScore += combo * 12;
                         showCenterMessage(`⚡ PERFECT! x${combo} ⚡`, '#ffcc44');
-                        // 特效粒子感
+                        vibrate(50);
                     } else {
                         if (lastJumpSuccess) combo++;
                         else combo = 1;
                         addScore += combo * 5;
-                        showCenterMessage(`👍 漂亮 +${addScore}`, '#aaffdd');
+                        showCenterMessage(`👍 GREAT! +${addScore}`, '#aaffdd');
                     }
                     
-                    // 更新分数
                     score += addScore;
                     document.getElementById('score').innerHTML = score;
-                    
-                    // 飘浮加分效果
                     showFloatingScore(addScore, isPerfect);
                     
-                    // 最高分更新与动画
                     if (score > highScore) {
                         highScore = score;
                         localStorage.setItem('jumpHighScore_V2', highScore);
@@ -394,39 +489,35 @@
                         const highEl = document.getElementById('highScore');
                         highEl.classList.add('record-bling');
                         setTimeout(() => highEl.classList.remove('record-bling'), 400);
-                        showCenterMessage('🏆 新纪录！ 🏆', '#ffaa44');
+                        showCenterMessage('🏆 NEW RECORD! 🏆', '#ffaa44');
+                        vibrate(100);
                     }
                     
-                    // 移动玩家到目标点中心 (吸附)
                     player.x = target.x;
                     player.y = target.y;
-                    
-                    // 生成下一个平台
                     generateTarget();
-                    
                     lastJumpSuccess = true;
                     
-                    // 小优化: 连击音效模拟（视觉反馈）
                     if (combo >= 3 && combo % 3 === 0) {
-                        showCenterMessage(`🔥 ${combo} 连击！ 🔥`, '#ff8866');
+                        showCenterMessage(`🔥 ${combo} COMBO! 🔥`, '#ff8866');
                     }
                     
                 } else {
-                    // ----- 游戏结束 -----
+                    // Game over - vibration
+                    vibrate(100);
+                    
                     gameRunning = false;
                     lastJumpSuccess = false;
                     combo = 0;
-                    showCenterMessage(`💀 游戏结束  得分: ${score} 💀`, '#ff6b6b', true);
-                    document.getElementById('chargingText').innerHTML = '💀 游戏结束，点击「重来」继续挑战';
+                    showCenterMessage(`💀 GAME OVER  Score: ${score} 💀`, '#ff6b6b', true);
+                    document.getElementById('chargingText').innerHTML = '💀 GAME OVER - Press RESTART';
                     document.getElementById('chargingText').style.color = '#ffaaaa';
                     
-                    // 添加画布抖动效果 (通过类)
                     canvas.classList.add('game-over-shake');
                     setTimeout(() => canvas.classList.remove('game-over-shake'), 400);
                     
-                    // 额外显示失败距离提示
                     const distMsg = document.createElement('div');
-                    distMsg.textContent = `差了 ${Math.floor(error)} 像素... 继续加油！`;
+                    distMsg.textContent = `Missed by ${Math.floor(error)} pixels... Try again!`;
                     distMsg.style.position = 'fixed';
                     distMsg.style.bottom = '25%';
                     distMsg.style.left = '50%';
@@ -442,14 +533,13 @@
                     setTimeout(() => distMsg.remove(), 1500);
                 }
                 
-                // 重置蓄力状态
                 isCharging = false;
                 currentPower = 0;
                 updateChargingDisplay();
                 jumpExecuting = false;
             }
             
-            // 开始蓄力
+            // Start charging
             function startCharge(e) {
                 e.preventDefault();
                 if (!gameRunning) return;
@@ -458,16 +548,14 @@
                 pressStartTime = Date.now();
                 currentPower = 0;
                 updateChargingDisplay();
-                // 蓄力时轻微画布提示
                 canvas.style.cursor = 'grabbing';
             }
             
-            // 结束蓄力
+            // End charging
             function endCharge(e) {
                 e.preventDefault();
                 canvas.style.cursor = 'pointer';
                 if (!gameRunning) {
-                    // 如果游戏结束中但还在蓄力状态，强制清理
                     if (isCharging) {
                         isCharging = false;
                         currentPower = 0;
@@ -480,20 +568,20 @@
                 }
             }
             
-            // 更新UI (蓄力条)
+            // Update charging UI
             function updateChargingDisplay() {
                 const fillPercent = currentPower;
                 document.getElementById('chargingBar').style.width = fillPercent + '%';
                 if (isCharging && gameRunning) {
-                    document.getElementById('chargingText').innerHTML = `⚡ 蓄力中 ${Math.floor(currentPower)}%  ⚡`;
+                    document.getElementById('chargingText').innerHTML = `⚡ CHARGING ${Math.floor(currentPower)}% ⚡`;
                     document.getElementById('chargingText').style.color = '#ffcc88';
                 } else if (gameRunning) {
-                    document.getElementById('chargingText').innerHTML = '💡 按住 蓄力跳跃';
+                    document.getElementById('chargingText').innerHTML = '💡 HOLD to CHARGE';
                     document.getElementById('chargingText').style.color = '#f0f0f0';
                 }
             }
             
-            // 蓄力实时更新循环 (性能优化 requestFrame)
+            // Charging update loop
             let chargeLoopId = null;
             function startChargeUpdater() {
                 if (chargeLoopId) cancelAnimationFrame(chargeLoopId);
@@ -501,7 +589,6 @@
                     if (isCharging && gameRunning) {
                         const now = Date.now();
                         const elapsed = now - pressStartTime;
-                        // 蓄力速度: 0.7秒蓄满 (更跟手)
                         let newPower = Math.min((elapsed / 7.5), 100);
                         if (newPower !== currentPower) {
                             currentPower = newPower;
@@ -513,7 +600,7 @@
                 updateCharge();
             }
             
-            // 重置游戏 (优化版)
+            // Reset game
             function resetGame() {
                 gameRunning = true;
                 score = 0;
@@ -523,38 +610,34 @@
                 currentPower = 0;
                 jumpExecuting = false;
                 
-                // 玩家起始位置 (安全区)
                 player = { x: 250, y: 350, radius: 13 };
                 document.getElementById('score').innerHTML = "0";
                 updateChargingDisplay();
-                document.getElementById('chargingText').innerHTML = '💡 按住 蓄力跳跃';
+                document.getElementById('chargingText').innerHTML = '💡 HOLD to CHARGE';
                 document.getElementById('chargingText').style.color = '#f0f0f0';
                 
-                // 生成有效目标
                 generateTarget();
                 
-                // 强制让第一个目标不要过于离谱
                 let firstDist = getDistance();
                 if (firstDist < 50 || firstDist > 210) {
                     generateTarget();
                 }
                 
-                showCenterMessage('✨ 游戏已重置，挑战开始 ✨', '#88ffaa');
+                showCenterMessage('✨ GAME RESTARTED! ✨', '#88ffaa');
                 canvas.classList.remove('game-over-shake');
+                vibrate(50);
             }
             
-            // ---------- 绘制模块（华丽视觉优化）----------
+            // Drawing module
             function draw() {
                 ctx.clearRect(0, 0, WIDTH, HEIGHT);
                 
-                // 渐变背景
                 const grad = ctx.createLinearGradient(0, 0, 0, HEIGHT);
                 grad.addColorStop(0, '#e9f0ff');
                 grad.addColorStop(1, '#d4e0f0');
                 ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, WIDTH, HEIGHT);
                 
-                // 装饰网格+光晕
                 ctx.strokeStyle = '#b0c4de';
                 ctx.lineWidth = 0.5;
                 for (let i = 0; i < WIDTH; i += 40) {
@@ -568,19 +651,15 @@
                     ctx.stroke();
                 }
                 
-                // 目标平台阴影
                 ctx.shadowColor = 'rgba(0,0,0,0.3)';
                 ctx.shadowBlur = 12;
-                // 平台立体感
                 ctx.fillStyle = '#ff8c69';
                 ctx.fillRect(target.x - target.size/2, target.y - target.size/2, target.size, target.size);
                 ctx.fillStyle = '#ffaa77';
                 ctx.fillRect(target.x - target.size/3, target.y - target.size/3, target.size*0.66, target.size*0.66);
-                // 平台高光
                 ctx.fillStyle = '#ffdd99';
                 ctx.fillRect(target.x - target.size/5, target.y - target.size/5, target.size*0.4, target.size*0.4);
                 
-                // 玩家圆形+渐变
                 const gradPlayer = ctx.createRadialGradient(player.x-3, player.y-3, 3, player.x, player.y, player.radius);
                 gradPlayer.addColorStop(0, '#6dd5fa');
                 gradPlayer.addColorStop(1, '#2b9bc2');
@@ -589,7 +668,6 @@
                 ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
                 ctx.fill();
                 
-                // 眼睛
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
                 ctx.arc(player.x - 5, player.y - 4, 3, 0, Math.PI*2);
@@ -604,7 +682,7 @@
                 ctx.beginPath();
                 ctx.arc(player.x + 4.8, player.y - 4.8, 1.3, 0, Math.PI*2);
                 ctx.fill();
-                // 腮红
+                
                 ctx.fillStyle = '#ffaa99';
                 ctx.globalAlpha = 0.6;
                 ctx.beginPath();
@@ -615,14 +693,12 @@
                 ctx.fill();
                 ctx.globalAlpha = 1;
                 
-                // 微笑
                 ctx.beginPath();
                 ctx.arc(player.x, player.y + 3, 6, 0.1, Math.PI - 0.1);
                 ctx.strokeStyle = '#2c3e50';
                 ctx.lineWidth = 2;
                 ctx.stroke();
                 
-                // 蓄力特效: 动态光圈+指引线
                 if (isCharging && gameRunning) {
                     const pulseSize = player.radius + (currentPower / 2.2);
                     ctx.fillStyle = `rgba(255, 120, 80, ${0.25 + currentPower/200})`;
@@ -630,7 +706,6 @@
                     ctx.arc(player.x, player.y, pulseSize, 0, Math.PI*2);
                     ctx.fill();
                     
-                    // 动态虚线轨迹 (方向指向目标)
                     const angle = Math.atan2(target.y - player.y, target.x - player.x);
                     const lineLen = player.radius + currentPower * 1.8;
                     const toX = player.x + Math.cos(angle) * lineLen;
@@ -645,7 +720,6 @@
                     ctx.setLineDash([]);
                 }
                 
-                // 虚线距离指示 (优雅)
                 ctx.beginPath();
                 ctx.moveTo(player.x, player.y);
                 ctx.lineTo(target.x, target.y);
@@ -655,14 +729,12 @@
                 ctx.stroke();
                 ctx.setLineDash([]);
                 
-                // 距离数值标签
                 const dist = getDistance();
                 ctx.font = 'bold 14px "Segoe UI"';
                 ctx.fillStyle = '#2c3e66';
                 ctx.shadowBlur = 2;
                 ctx.fillText(`📏 ${Math.floor(dist)} px`, (player.x + target.x)/2 - 20, (player.y + target.y)/2 - 12);
                 
-                // 连击显示
                 if (combo >= 2 && gameRunning) {
                     ctx.font = 'bold 22px "Segoe UI"';
                     ctx.fillStyle = '#ff8844';
@@ -673,23 +745,21 @@
                 ctx.shadowBlur = 0;
             }
             
-            // ----- 动画循环 (流畅绘制) -----
+            // Animation loop
             function animate() {
                 draw();
                 requestAnimationFrame(animate);
             }
             
-            // ----- 事件绑定（支持触屏和鼠标、键盘优化）-----
+            // Event binding
             function attachEvents() {
-                // 鼠标/触摸
                 canvas.addEventListener('mousedown', startCharge);
                 window.addEventListener('mouseup', endCharge);
                 canvas.addEventListener('touchstart', startCharge, {passive: false});
-                window.addEventListener('touchend', endCharge, {passive: false});
-                // 防止canvas外释放无效
+                canvas.addEventListener('touchend', endCharge, {passive: false});
+                canvas.addEventListener('touchcancel', endCharge, {passive: false});
                 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
                 
-                // 键盘空格
                 window.addEventListener('keydown', (e) => {
                     if (e.code === 'Space') {
                         e.preventDefault();
@@ -707,14 +777,19 @@
                 document.getElementById('resetBtn').addEventListener('click', () => {
                     resetGame();
                 });
+                
+                canvas.addEventListener('touchmove', (e) => {
+                    if (isCharging) {
+                        e.preventDefault();
+                    }
+                }, {passive: false});
             }
             
-            // 初始化游戏
+            // Initialize game
             function init() {
                 attachEvents();
                 startChargeUpdater();
                 generateTarget();
-                // 确保起始目标距离合理
                 let initDist = getDistance();
                 if (initDist < 55 || initDist > 205) {
                     generateTarget();
