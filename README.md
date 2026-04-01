@@ -1,7 +1,4 @@
-# Jump-Game
-A fun charging jump game - press and hold to charge, release to jump!
-
-# Jump Jump Game 🎮
+# Jump-Game 🎮
 
 A fun charging jump game built with HTML5 Canvas. Press and hold to charge your jump power, release to jump! Test your precision and aim for the highest score!
 
